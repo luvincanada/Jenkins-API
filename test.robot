@@ -7,19 +7,62 @@ Library    Collections
 ${MESSAGE}    Hello, world!
 
 *** Test Cases ***
-Verify Hostname
-    ${result}=  get    get?foo1=bar1&foo2=bar2 
+Get Hostname
+    [Documentation]    Get host name of switch
+    [Tags]    get    hostname
+    ${result}=  get    system:system/config
     Should Be Equal  ${result.status_code}  ${200}
     ${json}=  Set Variable  ${result.json()}
     Log    ${json}
-    json property should equal    ${json}    args    {u'content': u'config', u'foo1': u'bar1', u'foo2': u'bar2'}
+Put Hostname
+    [Documentation]    Change host name of switch
+    [Tags]    put    hostname
+    ${putresult}=  put    system:system/config    {"config":{"hostname":"Switch1"}}
+    Should Be Equal  ${putresult.status_code}  ${204}
+    ${result}=  get    system:system/config
+    Should Be Equal  ${result.status_code}  ${200}
+    ${json}=  Set Variable  ${result.json()}
+    Log    ${json}
+    json property should equal    ${json}    openconfig-system:system    {"config":{"hostname":"Switch1"}}
+Patch Hostname
+    [Documentation]    Change host name of switch
+    [Tags]    put    hostname
+    ${putresult}=  patch    system:system/config    {"config":{"hostname":"Switch1"}}
+    Should Be Equal  ${putresult.status_code}  ${204}
+    ${result}=  get    system:system/config
+    Should Be Equal  ${result.status_code}  ${200}
+    ${json}=  Set Variable  ${result.json()}
+    Log    ${json}
+    json property should equal    ${json}    openconfig-system:system    {"config":{"hostname":"Switch1"}}  
+Post Vlan
+    [Documentation]    Create vlan in switch
+    [Tags]    post    vlan
+    ${postresult}=    post    vlan:vlans    {"vlan-id":33}
+    Should Be Equal  ${postresult.status_code}  ${201}
+    ${result}=  get    vlan:vlans/vlan=33/config/vlan-id
+    Should Be Equal  ${result.status_code}  ${200}
+    ${json}=  Set Variable  ${result.json()}
+    Log    ${json}
+    json property should equal    ${json}    openconfig-vlan:vlans    {"vlan":[{"config":{"vlan-id":33},"vlan-id":33}]}
+Patch Vlan
+    [Documentation]    Update vlan in switch
+    [Tags]    patch    vlan
+    ${patchresult}=    patch    vlan:vlans/vlan=33/config/vlan-id    {"config":{"name":"lab-test-vlan"},"vlan-id":33}
+    Should Be Equal  ${patchresult.status_code}  ${204}
+    ${result}=  get    vlan:vlans/vlan=33/config/vlan-id
+    Should Be Equal  ${result.status_code}  ${200}
+    ${json}=  Set Variable  ${result.json()}
+    Log    ${json}
+    json property should equal    ${json}    openconfig-vlan:vlans    {"vlan":[{"config":{"name":"lab-test-vlan"},"vlan-id":33}]}   
+Delete VLAN
+    [Documentation]    delete vlan in switch
+    [Tags]    delete    vlan
+    ${delresult}=    delete    vlan:vlans/vlan=33
+    Log    ${delresult.status_code}
+    Should Be Equal  ${delresult.status_code}  ${204}
+    ${result}=  get    vlan:vlans/vlan=33/config/vlan-id
+    Should Be Equal  ${result.status_code}  ${404}
     
-Verify Post
-    ${result}=  post    post    {"id": "1"}
-    Should Be Equal  ${result.status_code}  ${200}
-    ${json}=  Set Variable  ${result.json()}
-    Log    ${json}
-    json property should equal    ${json}    data    {u'id': u'1'}  
     
 *** Keywords ***
 json_property_should_equal    
